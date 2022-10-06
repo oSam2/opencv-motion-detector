@@ -34,6 +34,8 @@ Run the script with a working webcam! You'll see how it works!
 import imutils
 import cv2
 import numpy as np
+import time
+import uuid
 
 # =============================================================================
 # USER-SET PARAMETERS
@@ -69,6 +71,26 @@ next_frame = None
 font = cv2.FONT_HERSHEY_SIMPLEX
 delay_counter = 0
 movement_persistent_counter = 0
+
+# Timer
+start_time = time.time()
+
+# Video file
+def record_video():
+
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    
+    size = (frame_width, frame_height)
+
+    result = cv2.VideoWriter('./output/video' + str(uuid.uuid4()) + '.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, size)
+
+    for frame in range(100):
+        ret, frame = cap.read()
+        result.write(frame)
+    result.release()
+
+    return
 
 # LOOP!
 while True:
@@ -115,7 +137,7 @@ while True:
 
     # Fill in holes via dilate(), and find contours of the thesholds
     thresh = cv2.dilate(thresh, None, iterations = 2)
-    _, cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # loop over the contours
     for c in cnts:
@@ -144,6 +166,10 @@ while True:
         movement_persistent_counter -= 1
     else:
         text = "No Movement Detected"
+        if(start_time < time.time() - 10):
+            print('recording')
+            record_video()
+            start_time = time.time()
 
     # Print the text on the screen, and display the raw and processed video 
     # feeds
