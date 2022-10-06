@@ -34,8 +34,8 @@ Run the script with a working webcam! You'll see how it works!
 import imutils
 import cv2
 import numpy as np
-import time
-import uuid
+from datetime import datetime, timedelta
+import schedule
 
 # =============================================================================
 # USER-SET PARAMETERS
@@ -73,27 +73,31 @@ delay_counter = 0
 movement_persistent_counter = 0
 
 # Timer
-start_time = time.time()
+date_now = datetime.now()
 
 # Video file
 def record_video():
-
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     
     size = (frame_width, frame_height)
 
-    result = cv2.VideoWriter('./output/video' + str(uuid.uuid4()) + '.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, size)
+    result = cv2.VideoWriter('./output/video - ' + date_now.strftime("%d_%m_%Y_%H_%M_%S") + '.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 24, size)
 
-    for frame in range(100):
+    for frame in range(240):
         ret, frame = cap.read()
         result.write(frame)
     result.release()
 
     return
 
+# Task
+schedule.every().minute.do(record_video)
+# schedule.every().day.at("00:00").do(record_video)
+
 # LOOP!
 while True:
+    schedule.run_pending()
 
     # Set transient motion detected as false
     transient_movement_flag = False
@@ -166,10 +170,11 @@ while True:
         movement_persistent_counter -= 1
     else:
         text = "No Movement Detected"
-        if(start_time < time.time() - 10):
+        start_time = datetime.now()
+        if(start_time > date_now + timedelta(seconds=10)):
             print('recording')
             record_video()
-            start_time = time.time()
+            date_now = datetime.now()
 
     # Print the text on the screen, and display the raw and processed video 
     # feeds
